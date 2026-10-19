@@ -10,6 +10,8 @@
   let restoring = false;
   let saveTimer, toastTimer;
   let dialogReturnFocus = null;
+  let settingsReturnFocus = null;
+  const phoneLayout = matchMedia('(max-width:760px)');
 
   function storageWarning(message) {
     storageAvailable = false;
@@ -100,6 +102,27 @@
     $('theme-toggle').textContent = state.settings.theme === 'dark' ? '낮' : '밤';
     $('theme-toggle').setAttribute('aria-pressed', String(state.settings.theme === 'dark'));
     $('theme-toggle').setAttribute('aria-label', state.settings.theme === 'dark' ? '종이 테마로 변경' : '밤 테마로 변경');
+    $('settings-font-size').textContent = state.settings.fontSize + 'px';
+    $('font-slider').value = state.settings.fontSize;
+    $('settings-font-down').disabled = state.settings.fontSize <= 16;
+    $('settings-font-up').disabled = state.settings.fontSize >= 32;
+    $('settings-theme').textContent = state.settings.theme === 'dark' ? '종이 테마로 바꾸기' : '밤 테마 사용';
+    $('settings-theme').setAttribute('aria-pressed', String(state.settings.theme === 'dark'));
+  }
+  function renderPhoneNavigation() {
+    document.body.classList.toggle('has-reader', Boolean(route.book));
+    document.body.classList.toggle('summary-mode', state.settings.mode==='summary');
+    const nav=$('mobile-reading-nav');nav.replaceChildren();nav.hidden=!route.book;
+    $('context-open').textContent=phoneLayout.matches?(route.book?'맥락':'메모'):(route.book?'맥락 · 메모 ↗':'내 메모 ↗');
+    if(!route.book)return;
+    const s=route.scene,book=route.book;
+    const previous=button('← 이전','mobile-prev',()=>navigate(book.id,s.number-1));
+    previous.setAttribute('aria-label','모바일 이전 장면');previous.disabled=s.number===1;
+    const count=el('span','mobile-scene-count',`${s.number} / ${book.scenes.length}`);count.setAttribute('aria-label',`현재 ${s.number}장면, 전체 ${book.scenes.length}장면`);
+    const last=s.number===book.scenes.length;
+    const next=button((state.settings.mode==='summary'?'요약 확인 · ':'원문 읽음 · ')+(last?'서재 →':'다음 →'),'primary mobile-next',()=>markCurrent(true));
+    next.setAttribute('aria-label',(state.settings.mode==='summary'?'요약 확인':'원문 읽음')+' 표시하고 '+(last?'서재로 이동':'다음 장면으로 이동'));
+    nav.append(previous,count,next);
   }
   function footerActions() {
     const foot = el('div', 'side-footer');
@@ -166,6 +189,7 @@
     [['01', '요약으로 흐름 잡기', '장면에서 일어나는 사건과 변화를 먼저 읽어요.'], ['02', '필요한 원문 펼치기', '말투와 행동이 궁금할 때 요약 + 원문으로 전환해요.'], ['03', '맥락과 메모로 이어가기', '이전 흐름과 내 메모를 보고 읽던 문단으로 돌아와요.']].forEach(([n,t,d]) => { const x = el('div'), title = el('b'); title.append(el('span','step',n),t); x.append(title,el('span','',d)); gg.append(x); }); guide.append(gg); wrap.append(guide);
     wrap.append(el('p', 'library-footnote', '원문은 제공된 HWP에서 추출했고 표기와 오탈자를 유지했습니다. 장면 제목·요약·읽기 포인트는 이해를 돕기 위해 덧붙였습니다. 요약에는 해당 장면의 전개가 포함됩니다.\n자동 저장은 현재 브라우저에 적용됩니다. 기기를 바꾸거나 브라우저 데이터를 지우기 전에는 진도 백업을 이용하세요.'));
     $('main').replaceChildren(wrap);
+    renderPhoneNavigation();
   }
   function setMode(mode) {
     if (state.settings.mode === mode) return;
@@ -243,7 +267,7 @@
     row.append(prev,button(mode==='summary'?'요약 확인하고 '+(s.number===book.scenes.length?'서재로 →':'다음 장면 →'):'원문 읽음 표시하고 '+(s.number===book.scenes.length?'서재로 →':'다음 장면 →'),'primary',()=>markCurrent(true)));end.append(row);
     end.append(el('p','completion-hint','진도 표시는 직접 눌러 기록해요. 요약 확인과 원문 읽음은 따로 저장됩니다.'));
     wrap.append(end,el('p','reader-footer',`장면 제목·요약·질문은 읽기를 위한 정리입니다. 원문: ${book.sourceFilename}\n이전 장면의 맥락만 먼저 보여드려요. 다음 장면의 요약은 그 장면을 열었을 때 볼 수 있습니다.`));
-    $('main').replaceChildren(wrap);highlightBookmark();
+    $('main').replaceChildren(wrap);highlightBookmark();renderPhoneNavigation();
   }
   function highlightBookmark() {
     document.querySelectorAll('.bookmarked').forEach(x=>x.classList.remove('bookmarked'));
@@ -256,7 +280,6 @@
     else renderLibrary();
     renderSidebar();closeToc();persist();
     if(route.book)restorePosition(currentProgress().positions[state.settings.mode]);else restorePosition({top:0});
-    $('context-open').textContent=route.book?'맥락 · 메모 ↗':'내 메모 ↗';
   }
   function renderContext() {
     const content=$('context-content');content.replaceChildren();
@@ -274,8 +297,10 @@
     const cast=el('section','dialog-section');cast.append(el('h3','','등장인물 · 기본 관계'));const dl=el('dl','cast-list');book.characters.forEach(([name,desc])=>dl.append(el('dt','',name),el('dd','',desc)));cast.append(dl);content.append(cast);
     content.append(el('p','dialog-note','메모와 진도는 이 브라우저에 저장됩니다. 기기 간 자동 동기화는 하지 않습니다.'));
   }
-  function openContext() {dialogReturnFocus=document.activeElement;renderContext();$('context-dialog').showModal();}
+  function openContext() {dialogReturnFocus=document.activeElement;renderContext();$('context-dialog').showModal();document.body.classList.add('dialog-open');}
   function closeContext() {$('context-dialog').close();dialogReturnFocus?.focus();}
+  function openSettings(){settingsReturnFocus=document.activeElement;applySettings();$('settings-dialog').showModal();$('settings-dialog').scrollTop=0;document.body.classList.add('dialog-open');}
+  function closeSettings(){$('settings-dialog').close();settingsReturnFocus?.focus();}
   function exportProgress() {
     savePosition();const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob);
     const a=link('',url);a.download='대본독서실-진도-'+new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul'}).format(new Date())+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('진도와 메모를 백업했어요. 대본 원문은 포함하지 않습니다.');
@@ -295,8 +320,13 @@
     event.target.value='';
   };
   $('font-down').onclick=()=>changeFont(-1);$('font-up').onclick=()=>changeFont(1);
-  function changeFont(delta){const p=capturePosition();state.settings.fontSize=Core.bounded(state.settings.fontSize+delta,16,32,20);applySettings();persist();if(route.book)restorePosition(p);}
-  $('theme-toggle').onclick=()=>{state.settings.theme=state.settings.theme==='dark'?'paper':'dark';applySettings();persist();};
+  function setFontSize(size){const p=capturePosition()||(route.book?currentProgress().positions[state.settings.mode]:null);state.settings.fontSize=Core.bounded(size,16,32,20);applySettings();persist();if(route.book)restorePosition(p);}
+  function changeFont(delta){setFontSize(state.settings.fontSize+delta);}
+  function toggleTheme(){state.settings.theme=state.settings.theme==='dark'?'paper':'dark';applySettings();persist();}
+  $('theme-toggle').onclick=toggleTheme;$('settings-theme').onclick=toggleTheme;
+  $('settings-font-down').onclick=()=>changeFont(-1);$('settings-font-up').onclick=()=>changeFont(1);
+  $('font-slider').oninput=event=>setFontSize(Number(event.target.value));
+  $('settings-open').onclick=openSettings;$('settings-close').onclick=closeSettings;$('settings-done').onclick=closeSettings;
   $('floating-bookmark').onclick=()=>{
     const p=capturePosition();
     if(!p?.line){toast('책갈피를 남길 원문 문단으로 먼저 이동해 주세요.');return;}
@@ -306,6 +336,11 @@
   $('sidebar-shade').onclick=closeToc;
   $('context-open').onclick=openContext;$('context-close').onclick=closeContext;
   $('context-dialog').addEventListener('click',event=>{if(event.target===$('context-dialog')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeContext();}});
+  $('settings-dialog').addEventListener('click',event=>{if(event.target===$('settings-dialog')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeSettings();}});
+  ['settings-dialog','context-dialog'].forEach(id=>$(id).addEventListener('close',()=>{if(!document.querySelector('dialog[open]'))document.body.classList.remove('dialog-open');}));
+  phoneLayout.addEventListener('change',()=>{closeToc();renderPhoneNavigation();});
+  document.addEventListener('focusin',event=>{if(event.target.tagName==='TEXTAREA')document.body.classList.add('editing-note');});
+  document.addEventListener('focusout',()=>requestAnimationFrame(()=>document.body.classList.toggle('editing-note',document.activeElement?.tagName==='TEXTAREA')));
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeToc();});
   window.addEventListener('hashchange',()=>{savePosition();renderRoute();});
   window.addEventListener('scroll',()=>{if(restoring||!route.book)return;clearTimeout(saveTimer);saveTimer=setTimeout(savePosition,180);},{passive:true});

@@ -2,13 +2,14 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f3ed">
   <meta name="description" content="장면별 요약과 원문, 읽던 위치와 메모가 함께하는 나의 대본 독서실.">
   <meta name="robots" content="noindex,nofollow">
   <title>막과 막 사이 · 대본 독서실</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="mobile.css">
   <script src="data.js" defer></script>
   <script src="state.js" defer></script>
   <script src="app.js" defer></script>
@@ -29,6 +30,7 @@
         <button id="font-up" aria-label="글자 크게">+</button>
       </div>
       <button id="theme-toggle" class="button quiet" aria-label="밤 테마로 변경" aria-pressed="false">밤</button>
+      <button id="settings-open" class="button mobile-only" aria-label="읽기 설정 열기">보기</button>
       <button id="context-open" class="button context-button">맥락 · 메모 <span aria-hidden="true">↗</span></button>
     </div>
   </header>
@@ -40,6 +42,19 @@
     <div class="dialog-header"><div><span class="eyebrow">READING COMPANION</span><h2 id="dialog-title">맥락과 나의 메모</h2></div><button id="context-close" class="icon-button" aria-label="맥락과 메모 닫기">×</button></div>
     <div id="context-content"></div>
   </dialog>
+  <dialog id="settings-dialog" class="context-dialog settings-dialog" aria-labelledby="settings-title">
+    <div class="dialog-header"><div><span class="eyebrow">READING SETTINGS</span><h2 id="settings-title">내 눈에 편하게</h2></div><button id="settings-close" class="icon-button" aria-label="읽기 설정 닫기">×</button></div>
+    <section class="settings-section" aria-labelledby="font-title">
+      <h3 id="font-title">글자 크기</h3>
+      <div class="settings-font-row"><button id="settings-font-down" class="button" aria-label="설정에서 글자 작게">가 −</button><output id="settings-font-size" aria-live="polite">20px</output><button id="settings-font-up" class="button" aria-label="설정에서 글자 크게">가 ＋</button></div>
+      <input id="font-slider" class="font-slider" type="range" min="16" max="32" step="1" value="20" aria-label="글자 크기 직접 조절">
+      <p class="font-preview">이야기를<br>내 속도로 읽어요.</p>
+    </section>
+    <section class="settings-section"><h3>화면 테마</h3><button id="settings-theme" class="button" aria-pressed="false">밤 테마 사용</button></section>
+    <p class="dialog-note">크기와 테마는 자동 저장돼요. 손가락 두 개로 화면을 확대해도 읽을 수 있어요.</p>
+    <button id="settings-done" class="button primary settings-done">이 설정으로 읽기</button>
+  </dialog>
+  <nav id="mobile-reading-nav" class="mobile-reading-nav" aria-label="모바일 장면 이동" hidden></nav>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <button id="floating-bookmark" class="button floating-bookmark" aria-label="현재 원문 문단에 책갈피 남기기" hidden>여기 책갈피 ＋</button>
   <input id="import-file" type="file" accept="application/json,.json" hidden>
