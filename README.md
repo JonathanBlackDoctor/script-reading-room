@@ -9,6 +9,7 @@
 - 모드별 읽던 문단·스크롤 위치 복원, 문단 책갈피
 - 글자 크기 16~32px, 종이·밤 테마
 - 브라우저 자동 저장, 진도 JSON 내보내기·불러오기
+- 폰에서는 한 줄 상단 도구, 보기 설정 창, 하단 장면 이동·진도 표시, 화면 가장자리 안전 여백 제공
 
 ## 실행
 
@@ -19,11 +20,13 @@
 ## 파일
 
 - `dist/index.html`, `styles.css`, `app.js`: 화면과 읽기 동작
+- `dist/mobile.css`: 폰 본문·상단·하단·설정 창 레이아웃
 - `dist/state.js`: 상태 검증·정규화·진도 계산
 - `dist/data.js`: 두 대본의 원문과 장면별 해설
 - `editorial.json`: 장면 제목·요약·이전 맥락·읽기 질문
 - `build_data.py`: 상위 작업 폴더의 추출문에서 데이터 생성, 전체 문단 보존 검증
 - `test-state.cjs`: 진도·백업·원문 버전 일치 검증
+- `test-ui.cjs`, `test-mobile.cjs`: Chrome 기능 회귀·폰 터치 환경 및 큰 글자·가로 화면 검증
 - `.openai/hosting.json`: 비공개 Sites 배포 설정
 
 ## 콘텐츠 원칙
