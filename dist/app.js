@@ -135,9 +135,7 @@
   function renderSidebar() {
     const sidebar = $('sidebar'); sidebar.replaceChildren();
     if (!route.book) {
-      sidebar.append(el('div', 'eyebrow', 'MY READING ROOM'));
-      const title = el('p', 'side-library-title'); title.append('한 장면씩,', el('br'), '이야기 안으로.'); sidebar.append(title);
-      sidebar.append(el('p', 'side-library-note', '요약으로 흐름을 잡고\n궁금한 장면은 원문으로 깊이 읽어요.'));
+      sidebar.append(el('p', 'side-library-title', '대본 목록'));
       const nav = link('', '#library', 'library-nav active'); nav.append(el('span', 'dot'), '나의 서재'); sidebar.append(nav);
       books.forEach(b => sidebar.append(link(b.title, `#${b.id}/${state.books[b.id].lastScene}`, 'library-nav')));
     } else {
@@ -165,15 +163,13 @@
     $('floating-bookmark').hidden = true;
     document.title = '막과 막 사이 · 나의 서재';
     const wrap = el('div', 'page-wrap');
-    const hero = el('section', 'library-hero'); hero.append(el('span', 'eyebrow', 'BETWEEN THE ACTS'));
-    const h = el('h1'); h.append('이야기의 흐름을,', el('br'), el('em', '', '내 속도로 이해하기.')); hero.append(h);
-    hero.append(el('p', '', '요약으로 먼저 연결하고, 원문으로 이해를 채워요.\n읽던 자리와 떠오른 생각은 여기에 남아 있어요.')); wrap.append(hero);
-    const label = el('div', 'library-label'); label.append(el('strong', '', '오늘의 대본'), el('span', '', '2개 작품 · 22개 장면')); wrap.append(label);
+    const hero = el('section', 'library-hero');hero.append(el('h1','','대본 읽기'),el('p','','장면별 요약과 원문을 읽고, 읽던 곳에서 이어가세요.'));wrap.append(hero);
+    const label = el('div', 'library-label'); label.append(el('strong', '', '대본 목록'), el('span', '', '2개 작품 · 22개 장면')); wrap.append(label);
     const grid = el('div', 'books-grid');
     books.forEach((book, index) => {
       const saved = state.books[book.id], p = Core.progress(book, state);
       const card = el('article', 'book-card'), cover = el('div', 'book-cover ' + book.id);
-      cover.append(el('span', 'cover-no', `READING NO. ${String(index + 1).padStart(2, '0')}`), el('h2', '', book.title), el('p', '', book.subtitle), el('span', 'cover-tag', 'SCRIPT READER'));
+      cover.append(el('h2', '', book.title), el('p', '', book.subtitle));
       card.append(cover);
       const body = el('div', 'book-body'), meta = el('div', 'book-meta');
       meta.append(el('span', 'pill', `${book.scenes.length}개 장면`), el('span', 'pill', `등장인물 ${book.characters.length}명`), el('span', 'pill', `${(book.chars / 10000).toFixed(1)}만 자`));
@@ -184,10 +180,7 @@
       body.append(el('p', 'resume-note', visited ? `${saved.lastScene}장면 · ${book.scenes[saved.lastScene - 1].title}` : '요약 확인과 원문 읽음은 따로 기록해요'));
       card.append(body); grid.append(card);
     }); wrap.append(grid);
-    const guide = el('section', 'reading-guide'); guide.append(el('h2', '', '이해가 이어지는 세 단계'));
-    const gg = el('div', 'guide-grid');
-    [['01', '요약으로 흐름 잡기', '장면에서 일어나는 사건과 변화를 먼저 읽어요.'], ['02', '필요한 원문 펼치기', '말투와 행동이 궁금할 때 요약 + 원문으로 전환해요.'], ['03', '맥락과 메모로 이어가기', '이전 흐름과 내 메모를 보고 읽던 문단으로 돌아와요.']].forEach(([n,t,d]) => { const x = el('div'), title = el('b'); title.append(el('span','step',n),t); x.append(title,el('span','',d)); gg.append(x); }); guide.append(gg); wrap.append(guide);
-    wrap.append(el('p', 'library-footnote', '원문은 제공된 HWP에서 추출했고 표기와 오탈자를 유지했습니다. 장면 제목·요약·읽기 포인트는 이해를 돕기 위해 덧붙였습니다. 요약에는 해당 장면의 전개가 포함됩니다.\n자동 저장은 현재 브라우저에 적용됩니다. 기기를 바꾸거나 브라우저 데이터를 지우기 전에는 진도 백업을 이용하세요.'));
+    wrap.append(el('p', 'library-footnote', '진도와 메모는 이 브라우저에 저장됩니다. 다른 기기로 옮길 때는 진도 백업을 이용하세요.'));
     $('main').replaceChildren(wrap);
     renderPhoneNavigation();
   }
@@ -220,7 +213,7 @@
     document.title = `${book.title} ${s.number}장면 · 막과 막 사이`;
     const wrap = el('div', 'reader-wrap');
     const crumb = el('div', 'reader-breadcrumb'); crumb.append(link('← 나의 서재', '#library'), el('span', '', book.setting)); wrap.append(crumb);
-    const hero = el('section', 'scene-hero'); hero.append(el('span', 'scene-kicker', `${book.title}  /  SCENE ${String(s.number).padStart(2,'0')} OF ${String(book.scenes.length).padStart(2,'0')}`), el('h1', '', s.title));
+    const hero = el('section', 'scene-hero'); hero.append(el('span', 'scene-kicker', `${book.title} · ${s.number} / ${book.scenes.length}장면`), el('h1', '', s.title));
     const modeRow = el('div', 'mode-switch'); modeRow.setAttribute('role', 'group'); modeRow.setAttribute('aria-label', '읽기 방식');
     ['summary','full'].forEach(m => { const b = button(m === 'summary' ? '요약 중심' : '요약 + 원문', mode === m ? 'primary' : '', () => setMode(m)); b.setAttribute('aria-pressed', String(mode === m)); modeRow.append(b); }); hero.append(modeRow);
     const actions = el('div', 'scene-actions');
