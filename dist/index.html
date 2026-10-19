@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ed">
+  <meta name="description" content="장면별 요약과 원문, 읽던 위치와 메모가 함께하는 나의 대본 독서실.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>막과 막 사이 · 대본 독서실</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="data.js" defer></script>
+  <script src="state.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">본문으로 건너뛰기</a>
+  <header class="topbar">
+    <a class="brand" href="#library" aria-label="막과 막 사이 서재로">
+      <img src="icon.svg" width="32" height="32" alt="">
+      <span>막과 막 사이<small>나의 대본 독서실</small></span>
+    </a>
+    <div class="toolbar">
+      <button id="toc-toggle" class="button mobile-only" aria-label="장면 목록 열기" aria-controls="sidebar" aria-expanded="false">목차</button>
+      <div class="font-control" role="group" aria-label="읽기 글자 크기">
+        <span class="font-label" aria-hidden="true">가</span>
+        <button id="font-down" aria-label="글자 작게">−</button>
+        <output id="font-size" aria-live="polite">20</output>
+        <button id="font-up" aria-label="글자 크게">+</button>
+      </div>
+      <button id="theme-toggle" class="button quiet" aria-label="밤 테마로 변경" aria-pressed="false">밤</button>
+      <button id="context-open" class="button context-button">맥락 · 메모 <span aria-hidden="true">↗</span></button>
+    </div>
+  </header>
+  <div id="storage-warning" class="storage-warning" role="status" hidden></div>
+  <div id="sidebar-shade" hidden></div>
+  <aside id="sidebar" class="sidebar" aria-label="작품과 장면 목록"></aside>
+  <main id="main" tabindex="-1"></main>
+  <dialog id="context-dialog" class="context-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-header"><div><span class="eyebrow">READING COMPANION</span><h2 id="dialog-title">맥락과 나의 메모</h2></div><button id="context-close" class="icon-button" aria-label="맥락과 메모 닫기">×</button></div>
+    <div id="context-content"></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <button id="floating-bookmark" class="button floating-bookmark" aria-label="현재 원문 문단에 책갈피 남기기" hidden>여기 책갈피 ＋</button>
+  <input id="import-file" type="file" accept="application/json,.json" hidden>
+</body>
+</html>

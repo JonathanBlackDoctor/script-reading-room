@@ -1,0 +1,76 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const BASE = process.env.READER_TEST_URL || 'http://127.0.0.1:18871/';
+const OUT = path.join(__dirname, '.preview');
+
+(async () => {
+  await fs.mkdir(OUT, {recursive:true});
+  const browser = await chromium.launch({executablePath:process.env.CHROME_EXECUTABLE || 'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+  const context = await browser.newContext({viewport:{width:1365,height:900},acceptDownloads:true});
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const settle = async () => {await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));};
+  const getState = () => page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('between-acts:v1:')&&!k.endsWith(':before-import')))));
+  const report = name => console.log('PASS', name);
+  try {
+    await page.goto(BASE);await page.waitForSelector('.book-card');
+    assert.equal(await page.locator('.book-card').count(),2);report('both books available');
+    await page.getByRole('button',{name:'요약부터 읽기 →'}).first().click();
+    await page.waitForURL('**/#sidong/1');await settle();
+    assert.equal(await page.locator('.summary-card').count(),1);assert.equal(await page.locator('#original-text').count(),0);report('summary-first reading');
+    await page.getByRole('button',{name:'요약 확인하고 다음 장면 →'}).click();await page.waitForURL('**/#sidong/2');await settle();
+    let state=await getState();assert.equal(state.books.sidong.scenes[1].summaryDone,true);assert.equal(state.books.sidong.scenes[1].done,false);report('summary progress separate from original');
+    await page.getByLabel('2장면 · 나의 이해 메모',{exact:true}).fill('지난 기억과 지금의 대화가 어긋난다. <img src=x onerror=alert(1)>');
+    await page.getByRole('button',{name:'요약 + 원문',exact:true}).click();await settle();
+    assert.equal(await page.locator('#original-text p').count(),33);
+    await page.locator('#line-163').evaluate(e=>{e.scrollIntoView();window.scrollBy(0,-140);});await settle();
+    await page.getByRole('button',{name:'현재 원문 문단에 책갈피 남기기',exact:true}).click();
+    state=await getState();const bm=state.books.sidong.scenes[2].bookmark;assert.ok(bm?.line);report('bookmark while reading without losing position');
+    await page.getByRole('button',{name:'글자 크게',exact:true}).click();await settle();
+    assert.equal(await page.locator('#font-size').textContent(),'21');
+    const readFont=await page.locator('#original-text').evaluate(e=>getComputedStyle(e).fontSize);assert.equal(readFont,'21px');report('font changes reading text');
+    await page.getByRole('button',{name:'맥락 · 메모 ↗',exact:true}).click();
+    await page.getByLabel('작품 전체에서 기억할 맥락',{exact:true}).fill('공우의 일과 자존심을 연결해서 보기.');
+    assert.ok(await page.locator('#context-content').textContent());await page.getByRole('button',{name:'맥락과 메모 닫기',exact:true}).click();
+    await page.locator('#line-165').evaluate(e=>{e.scrollIntoView();window.scrollBy(0,-145);});await settle();
+    await page.waitForFunction(()=>{const key=Object.keys(localStorage).find(k=>k.startsWith('between-acts:v1:'));const p=JSON.parse(localStorage.getItem(key)).books.sidong.scenes[2].positions.full;return p.line!==null&&Math.abs(p.top-Math.round(scrollY))<2;});
+    const before=(await getState()).books.sidong.scenes[2].positions.full;
+    await page.reload();await page.waitForSelector('#original-text');await settle();
+    const pos=await page.locator('#line-'+before.line).evaluate(e=>e.getBoundingClientRect().top);
+    assert.ok(Math.abs(pos-(102+before.delta))<8,`restored paragraph offset ${pos}, expected ${102+before.delta}`);
+    assert.equal(await page.locator('#font-size').textContent(),'21');
+    assert.match((await getState()).books.sidong.scenes[2].note,/지난 기억/);assert.match((await getState()).books.sidong.memory,/자존심/);report('reload restores paragraph, font, note and memory');
+    await page.getByRole('button',{name:'원문 읽음 표시',exact:true}).click();await settle();
+    state=await getState();assert.equal(state.books.sidong.scenes[2].done,true);assert.equal(state.books.sidong.scenes[3].done,false);report('explicit original completion stays scoped to scene');
+    await page.getByRole('button',{name:'요약 중심',exact:true}).click();await settle();
+    assert.equal(await page.locator('#original-text').count(),0);
+    assert.ok((await getState()).books.sidong.scenes[2].bookmark.line);assert.ok((await getState()).books.sidong.scenes[2].positions.full);report('summary mode preserves original bookmark and position record');
+    const dl=page.waitForEvent('download');await page.getByRole('button',{name:'진도 백업',exact:true}).click();
+    const download=await dl, backupPath=path.join(OUT,'test-backup.json');await download.saveAs(backupPath);
+    const backup=JSON.parse(await fs.readFile(backupPath,'utf8'));assert.equal(backup.version,1);assert.ok(!JSON.stringify(backup).includes('sourceFilename'));report('portable progress export excludes original scripts');
+    const bad=JSON.parse(JSON.stringify(backup));bad.books.sidong.sourceHash='wrong';
+    await page.locator('#import-file').setInputFiles({name:'wrong.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bad))});
+    await page.waitForFunction(()=>document.getElementById('toast').textContent.includes('원문 버전'));assert.equal((await getState()).books.sidong.scenes[2].done,true);report('wrong source backup rejected without data loss');
+    const fresh=await browser.newContext({viewport:{width:1365,height:900}}), restored=await fresh.newPage();
+    restored.on('pageerror',e=>errors.push(e.message));await restored.goto(BASE);await restored.waitForSelector('.book-card');
+    await restored.locator('#import-file').setInputFiles(backupPath);await restored.waitForURL('**/#sidong/2');
+    assert.match(await restored.getByLabel('2장면 · 나의 이해 메모',{exact:true}).inputValue(),/지난 기억/);report('backup imports in a fresh browser context');await fresh.close();
+    await page.goto(BASE+'#temp/6');await page.waitForSelector('.summary-card');await settle();
+    assert.match(await page.locator('.summary-card').textContent(),/完全|완전히/);report('second script final scene opens');
+    await page.goto(BASE+'#sidong/1');await page.waitForSelector('.summary-card');await settle();
+    await page.screenshot({path:path.join(OUT,'reader-desktop.png'),fullPage:true});
+    await page.getByRole('button',{name:'요약 + 원문',exact:true}).click();await settle();
+    await page.locator('#original').evaluate(e=>e.scrollIntoView());await settle();
+    await page.screenshot({path:path.join(OUT,'original-desktop.png')});
+    for(const width of [360,390,768,1024,1440]){
+      await page.setViewportSize({width,height:844});await settle();
+      const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false,`horizontal overflow at ${width}`);
+      if(width===390){await page.getByRole('button',{name:'장면 목록 열기',exact:true}).click();assert.equal(await page.locator('#sidebar').isVisible(),true);await page.locator('.scene-link[href="#sidong/3"]').click();await page.waitForURL('**/#sidong/3');await settle();assert.equal(await page.locator('#sidebar').isVisible(),false);await page.getByRole('button',{name:'요약 중심',exact:true}).click();await settle();await page.screenshot({path:path.join(OUT,'reader-mobile.png'),fullPage:true});}
+    }report('responsive layouts and mobile chapter navigation');
+    await page.getByRole('button',{name:'밤 테마로 변경',exact:true}).click();assert.ok(await page.locator('body.dark').count());await page.reload();await page.waitForSelector('body.dark');report('theme persists');
+    assert.deepEqual(errors,[]);report('no browser runtime errors');
+  }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1);});
