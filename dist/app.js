@@ -206,6 +206,7 @@
       else saved.done = !saved.done;
       persist(); const p=capturePosition(); renderSidebar(); renderReader(); restorePosition(p);
     }); d.setAttribute('aria-pressed', String(done)); actions.append(d);
+    if(mode === 'summary' && saved.done){d.textContent='✓ 원문까지 읽음';d.disabled=true;d.title='원문을 읽은 장면입니다. 원문 모드에서 읽음 표시를 변경할 수 있어요.';}
     if (saved.bookmark) actions.append(button('책갈피로 이동 ↗', '', () => {
       if (state.settings.mode !== 'full') { savePosition(); state.settings.mode = 'full'; persist(); renderReader(); }
       restorePosition(saved.bookmark);
