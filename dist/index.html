@@ -24,7 +24,7 @@
     </a>
     <div class="toolbar">
       <button id="toc-toggle" class="button mobile-only" aria-label="장면 목록 열기" aria-controls="sidebar" aria-expanded="false">목차</button>
-      <button id="settings-open" class="button" aria-label="읽기 설정 열기">글자 설정</button>
+      <button id="settings-open" class="button" aria-label="읽기 설정 열기">보기 설정</button>
       <button id="context-open" class="button context-button" aria-label="메모 열기">메모</button>
     </div>
   </header>
@@ -45,7 +45,8 @@
       <p class="font-preview">이야기를<br>내 속도로 읽어요.</p>
     </section>
     <section class="settings-section"><h3>화면 테마</h3><button id="settings-theme" class="button" aria-pressed="false">밤 테마 사용</button></section>
-    <p class="dialog-note">크기와 테마는 자동 저장돼요. 손가락 두 개로 화면을 확대해도 읽을 수 있어요.</p>
+    <section class="settings-section"><h3>인물 구분</h3><label class="character-color-control"><input id="character-colors" type="checkbox" checked>등장인물 이름 색상</label><p class="dialog-note">요약과 원문에서 같은 인물은 같은 색으로 표시해요.</p></section>
+    <p class="dialog-note">보기 설정은 자동 저장돼요. 손가락 두 개로 화면을 확대해도 읽을 수 있어요.</p>
     <button id="settings-done" class="button primary settings-done">이 설정으로 읽기</button>
   </dialog>
   <nav id="mobile-reading-nav" class="mobile-reading-nav" aria-label="모바일 장면 이동" hidden></nav>

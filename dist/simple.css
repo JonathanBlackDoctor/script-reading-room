@@ -1,6 +1,17 @@
 /* A quiet, text-first reading surface. */
 :root{--paper:#fff;--surface:#fff;--ink:#222;--muted:#686868;--line:#e6e6e6;--green:#222;--green-soft:#f4f4f4;--accent:#555;--sidebar:240px;--header:64px;--shadow:0 8px 32px #00000014}
 body{font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;letter-spacing:0}
+.character-color-control{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;cursor:pointer}
+.character-color-control input{width:18px;height:18px;accent-color:var(--ink);flex-shrink:0}
+.character-colors .character-name{color:var(--character-ink);background:var(--character-bg);border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.character-0{--character-ink:#365c79;--character-bg:#edf3f8}
+.character-1{--character-ink:#795162;--character-bg:#f7eef2}
+.character-2{--character-ink:#426452;--character-bg:#edf4ef}
+.character-3{--character-ink:#7a5933;--character-bg:#f7f1e8}
+.character-4{--character-ink:#625380;--character-bg:#f2eef7}
+.character-5{--character-ink:#386665;--character-bg:#ebf4f3}
+.dark.character-colors .character-name{color:var(--character-night);background:transparent}
+.character-0{--character-night:#aec9df}.character-1{--character-night:#dcb7c8}.character-2{--character-night:#afd0bc}.character-3{--character-night:#d9c09e}.character-4{--character-night:#c9bce0}.character-5{--character-night:#a7cecc}
 .topbar{padding:0 28px;background:var(--paper)}
 .brand{font-size:16px;font-weight:600;letter-spacing:-.4px}
 .brand img,.brand small,.eyebrow,.cover-no,.cover-tag{display:none}

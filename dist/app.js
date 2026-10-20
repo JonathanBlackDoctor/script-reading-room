@@ -95,6 +95,8 @@
   function applySettings() {
     document.documentElement.style.setProperty('--read-size', state.settings.fontSize + 'px');
     document.body.classList.toggle('dark', state.settings.theme === 'dark');
+    document.body.classList.toggle('character-colors', state.settings.characterColors);
+    $('character-colors').checked = state.settings.characterColors;
     $('settings-font-size').textContent = state.settings.fontSize + 'px';
     $('font-slider').value = state.settings.fontSize;
     $('settings-font-down').disabled = state.settings.fontSize <= 12;
@@ -242,7 +244,29 @@
     const previous=button('← 이전 장면','',()=>navigate(book.id,s.number-1));previous.disabled=s.number===1;
     navigation.append(previous,el('span','navigation-count',`${s.number} / ${book.scenes.length}`),button(s.number===book.scenes.length?'대본 목록으로 →':'다음 장면 →','primary',goNextScene));wrap.append(navigation);
     wrap.append(el('p','reader-footer','읽음 표시는 체크박스에서, 장면 이동은 이전·다음 버튼에서 할 수 있어요.'));
+    colorCharacterNames(wrap,book);
     $('main').replaceChildren(wrap);highlightBookmark();renderPhoneNavigation();
+  }
+  function colorCharacterNames(root,book) {
+    // Explicit source spelling variants share the canonical character's color.
+    const variants=book.id==='sidong'
+      ? [['임공우','입공우','공우'],['강정옥','강정욱','강경옥','강정우','정옥'],['성현기','성전기','현기'],['고상오','고장오','상오'],['김갑원','김감원','김갑천','갑원'],['박승조','승조']]
+      : [['오한구','한구'],['최철민','최철미','철민'],['김수정','수정'],['신반장','신 반장','신팀장'],['장형사','장 형사']];
+    const colors=new Map(variants.flatMap((names,index)=>names.map(name=>[name,index])));
+    const pattern=new RegExp([...colors.keys()].sort((a,b)=>b.length-a.length).join('|'),'g');
+    root.querySelectorAll('.recap-box,.summary-card,.learning-guide,.script,.intro-text').forEach(section=>{
+      const walker=document.createTreeWalker(section,NodeFilter.SHOW_TEXT),nodes=[];
+      while(walker.nextNode())nodes.push(walker.currentNode);
+      nodes.forEach(node=>{
+        const text=node.textContent,parts=document.createDocumentFragment();let start=0;
+        for(const match of text.matchAll(pattern)){
+          parts.append(document.createTextNode(text.slice(start,match.index)));
+          const name=el('span','character-name character-'+colors.get(match[0]),match[0]);
+          name.dataset.character=book.characters[colors.get(match[0])][0];parts.append(name);start=match.index+match[0].length;
+        }
+        if(start){parts.append(document.createTextNode(text.slice(start)));node.replaceWith(parts);}
+      });
+    });
   }
   function highlightBookmark() {
     document.querySelectorAll('.bookmarked').forEach(x=>x.classList.remove('bookmarked'));
@@ -296,6 +320,7 @@
   function changeFont(delta){setFontSize(state.settings.fontSize+delta);}
   function toggleTheme(){state.settings.theme=state.settings.theme==='dark'?'paper':'dark';applySettings();persist();}
   $('settings-theme').onclick=toggleTheme;
+  $('character-colors').onchange=event=>{state.settings.characterColors=event.target.checked;applySettings();persist();};
   $('settings-font-down').onclick=()=>changeFont(-1);$('settings-font-up').onclick=()=>changeFont(1);
   $('font-slider').oninput=event=>setFontSize(Number(event.target.value));
   $('settings-open').onclick=openSettings;$('settings-close').onclick=closeSettings;$('settings-done').onclick=closeSettings;
