@@ -58,14 +58,14 @@
     track.setAttribute('aria-valuemin', '0');
     track.setAttribute('aria-valuemax', String(total));
     track.setAttribute('aria-valuenow', String(value));
-    track.setAttribute('aria-label', '확인한 요약 장면');
+    track.setAttribute('aria-label', '읽은 원문 장면');
     const fill = el('span'); fill.style.width = `${value / total * 100}%`; track.append(fill); return track;
   }
   function currentProgress() { return route.book ? state.books[route.book.id].scenes[route.scene.number] : null; }
   function topOffset() { return document.querySelector('.topbar').getBoundingClientRect().height + 22; }
   function capturePosition() {
     if (!route.book || restoring) return null;
-    const mode = state.settings.mode;
+    const mode = 'full';
     const ps = [...document.querySelectorAll('#original-text p[data-line]')];
     const first = ps.find(p => p.getBoundingClientRect().bottom > topOffset());
     const inScript = mode === 'full' && first && $('original').getBoundingClientRect().top < topOffset();
@@ -106,7 +106,6 @@
   }
   function renderPhoneNavigation() {
     document.body.classList.toggle('has-reader', Boolean(route.book));
-    document.body.classList.toggle('summary-mode', state.settings.mode==='summary');
     const nav=$('mobile-reading-nav');nav.replaceChildren();nav.hidden=!route.book;
     $('context-open').textContent='메모';
     if(!route.book)return;
@@ -140,8 +139,8 @@
       books.forEach(b => { const o = el('option', '', b.title); o.value = b.id; o.selected = b.id === book.id; select.append(o); });
       select.onchange = () => navigate(select.value, state.books[select.value].lastScene); sidebar.append(select);
       const stat = el('div', 'side-stats');
-      const row = el('div', 'stats-line'); row.append(el('span', '', '요약 확인'), el('strong', '', `${stats.summary} / ${stats.total} 장면`));
-      stat.append(row, progressBar(stats.summary, stats.total), el('p', 'note-status', `원문 읽음 ${stats.full} / ${stats.total} · ✓ 원문  ◐ 요약`)); sidebar.append(stat);
+      const row = el('div', 'stats-line'); row.append(el('span', '', '원문 읽음'), el('strong', '', `${stats.full} / ${stats.total} 장면`));
+      stat.append(row, progressBar(stats.full, stats.total), el('p', 'note-status', `요약 확인 ${stats.summary} / ${stats.total} · ✓ 원문  ◐ 요약`)); sidebar.append(stat);
       const nav = el('nav', 'scene-list'); nav.setAttribute('aria-label', book.title + ' 장면');
       book.scenes.forEach(s => {
         const saved = state.books[book.id].scenes[s.number];
@@ -169,21 +168,15 @@
       const body = el('div', 'book-body'), meta = el('div', 'book-meta');
       meta.append(el('span', 'pill', `${book.scenes.length}개 장면`), el('span', 'pill', `등장인물 ${book.characters.length}명`), el('span', 'pill', `${(book.chars / 10000).toFixed(1)}만 자`));
       body.append(meta, el('p', '', book.description));
-      const stat = el('div', 'stats-line'); stat.append(el('span', '', `요약 ${p.summary}/${p.total} · 원문 ${p.full}/${p.total}`), el('strong', '', Math.round(p.summary / p.total * 100) + '%')); body.append(stat, progressBar(p.summary, p.total));
+      const stat = el('div', 'stats-line'); stat.append(el('span', '', `원문 ${p.full}/${p.total} · 요약 ${p.summary}/${p.total}`), el('strong', '', Math.round(p.full / p.total * 100) + '%')); body.append(stat, progressBar(p.full, p.total));
       const visited = Object.values(saved.scenes).some(s => s.visited);
-      body.append(button(visited ? '읽던 장면 이어보기  →' : '요약부터 읽기  →', 'primary', () => navigate(book.id, saved.lastScene)));
+      body.append(button(visited ? '읽던 장면 이어보기  →' : '대본 읽기  →', 'primary', () => navigate(book.id, saved.lastScene)));
       body.append(el('p', 'resume-note', visited ? `${saved.lastScene}장면 · ${book.scenes[saved.lastScene - 1].title}` : '요약 확인과 원문 읽음은 따로 기록해요'));
       card.append(body); grid.append(card);
     }); wrap.append(grid);
     wrap.append(el('p', 'library-footnote', '진도와 메모는 이 브라우저에 저장됩니다. 다른 기기로 옮길 때는 진도 백업을 이용하세요.'));
     $('main').replaceChildren(wrap);
     renderPhoneNavigation();
-  }
-  function setMode(mode) {
-    if (state.settings.mode === mode) return;
-    savePosition(); state.settings.mode = mode; persist(); renderReader(); renderSidebar();
-    restorePosition(currentProgress().positions[mode]);
-    requestAnimationFrame(()=>$('tab-'+mode)?.focus({preventScroll:true}));
   }
   function goNextScene() {
     if(route.scene.number<route.book.scenes.length)navigate(route.book.id,route.scene.number+1);
@@ -198,63 +191,55 @@
     box.append(label, input, status); return box;
   }
   function renderReader() {
-    const book=route.book,s=route.scene,saved=currentProgress(),mode=state.settings.mode;
-    $('floating-bookmark').hidden=mode!=='full';
+    const book=route.book,s=route.scene,saved=currentProgress();
+    $('floating-bookmark').hidden=false;
     document.title=`${book.title} ${s.number}장면 · 막과 막 사이`;
     const wrap=el('div','reader-wrap');
     const crumb=el('div','reader-breadcrumb');crumb.append(link('← 대본 목록','#library'));wrap.append(crumb);
     const hero=el('header','scene-heading');
     hero.append(el('p','scene-kicker',`${book.title} · ${s.number} / ${book.scenes.length}장면`),el('h1','',s.title));wrap.append(hero);
-    const tabs=el('div','reader-view-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','읽을 내용 선택');
-    ['summary','full'].forEach(m=>{
-      const tab=button(m==='summary'?'요약':'원문',mode===m?'active':'',()=>setMode(m));
-      tab.id='tab-'+m;tab.setAttribute('role','tab');tab.setAttribute('aria-selected',String(mode===m));tab.setAttribute('aria-controls','reading-panel');tab.tabIndex=mode===m?0:-1;
-      tab.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();setMode(event.key==='Home'?'summary':event.key==='End'?'full':mode==='summary'?'full':'summary');}});
-      tabs.append(tab);
-    });wrap.append(tabs);
+    const summary=el('details','scene-overview');summary.id='scene-summary';summary.open=saved.summaryOpen;
+    const summaryToggle=el('summary'),summaryHint=el('span','overview-hint',summary.open?'접기':'펼치기');summaryToggle.append(el('span','','장면 요약'),summaryHint);summary.append(summaryToggle);
+    const summaryText=el('div','overview-text');s.summary.forEach(text=>summaryText.append(el('p','',text)));summary.append(summaryText);
+    const focus=el('details','learning-guide');focus.append(el('summary','','이해를 돕는 포인트'));
+    const list=el('ul');s.focus.forEach(text=>list.append(el('li','',text)));focus.append(list,el('p','reading-question',s.question));summary.append(focus);
+    const summaryLabel=el('label','completion-control summary-completion'),summaryCheck=el('input');summaryCheck.type='checkbox';summaryCheck.checked=saved.summaryDone;
+    summaryLabel.append(summaryCheck,el('span','','이 장면 요약 읽음'));summaryCheck.onchange=()=>{saved.summaryDone=summaryCheck.checked;persist();renderSidebar();};summary.append(summaryLabel);
+    summary.ontoggle=()=>{saved.summaryOpen=summary.open;summaryHint.textContent=summary.open?'접기':'펼치기';persist();if(!restoring)savePosition();};wrap.append(summary);
     const recap=el('details','recap-box');recap.append(el('summary','','이전 내용 · 등장인물 다시 보기'),el('p','',s.before));
     const cast=el('details','cast-recap');cast.append(el('summary','','등장인물'));const castList=el('dl','cast-list');book.characters.forEach(([name,description])=>castList.append(el('dt','',name),el('dd','',description)));cast.append(castList);recap.append(cast);wrap.append(recap);
-    const panel=el('section','reading-panel');panel.id='reading-panel';panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','tab-'+mode);panel.tabIndex=0;
-    if(mode==='summary'){
-      const summary=el('section','summary-card');summary.id='scene-summary';
-      const head=el('div','panel-heading');head.append(el('h2','','장면 요약'),el('span','panel-kind','요약'));summary.append(head);
-      s.summary.forEach(text=>summary.append(el('p','',text)));panel.append(summary);
-      const focus=el('details','learning-guide');focus.append(el('summary','','이해를 돕는 포인트'));
-      const list=el('ul');s.focus.forEach(text=>list.append(el('li','',text)));focus.append(list,el('p','reading-question',s.question));panel.append(focus);
-    }else{
+    const panel=el('section','reading-panel');panel.id='reading-panel';panel.setAttribute('aria-label','대본 원문');
       const original=el('article','original');original.id='original';original.setAttribute('aria-label',`${book.title} ${s.number}장면 원문`);
       const head=el('div','panel-heading');head.append(el('h2','','대본 원문'),el('span','panel-kind','원문'));
       if(saved.bookmark)head.append(button('저장한 책갈피로 이동','bookmark-return',()=>restorePosition(saved.bookmark)));original.append(head);
       if(s.number===1){const intro=el('details','source-details');intro.append(el('summary','','등장인물과 무대 설정 · 원문'),el('div','intro-text',book.intro.map(line=>line.text).join('\n')));original.append(intro);}
       const script=el('div','script');script.id='original-text';
       s.lines.forEach(line=>{const paragraph=el('p',line.speaker?'dialogue':'direction');paragraph.dataset.line=String(line.number);paragraph.id='line-'+line.number;
-        if(line.speaker)paragraph.append(el('strong','speaker',line.speaker),el('span','body',line.body));else paragraph.textContent=line.text;
+        if(line.speaker){const separator=line.text.slice(line.speaker.length,line.text.length-line.body.length);paragraph.append(el('strong','speaker',line.speaker+separator),el('span','body',line.body));}else paragraph.textContent=line.text;
         script.append(paragraph);});original.append(script);panel.append(original);
-    }
     const completion=el('div','completion-strip');
-    const label=el('label','completion-control'),checkbox=el('input');checkbox.id='scene-complete';checkbox.type='checkbox';checkbox.checked=mode==='summary'?saved.summaryDone:saved.done;
-    label.append(checkbox,el('span','',mode==='summary'?'이 장면 요약 읽음':'이 장면 원문 읽음'));
+    const label=el('label','completion-control'),checkbox=el('input');checkbox.id='scene-complete';checkbox.type='checkbox';checkbox.checked=saved.done;
+    label.append(checkbox,el('span','','이 장면 원문 읽음'));
     const status=el('span','completion-status',checkbox.checked?'진도에 저장됨':'체크하면 진도에 저장됩니다');
-    checkbox.onchange=()=>{if(mode==='summary')saved.summaryDone=checkbox.checked;else saved.done=checkbox.checked;persist();status.textContent=checkbox.checked?'진도에 저장됨':'읽음 표시 해제됨';renderSidebar();};
+    checkbox.onchange=()=>{saved.done=checkbox.checked;persist();status.textContent=checkbox.checked?'진도에 저장됨':'읽음 표시 해제됨';renderSidebar();};
     completion.append(label,status);panel.append(completion);wrap.append(panel);
-    if(mode==='summary')wrap.append(button('이 장면 원문 읽기 →','open-original',()=>setMode('full')));
     const memo=el('details','scene-note-box');memo.open=Boolean(saved.note);memo.append(el('summary','','내 메모'+(saved.note?' · 저장된 메모 있음':'')));
     memo.append(makeNoteInput(saved.note,`${s.number}장면 메모`,value=>{saved.note=value;}));wrap.append(memo);
     const navigation=el('nav','next-row');navigation.setAttribute('aria-label','장면 이동');
     const previous=button('← 이전 장면','',()=>navigate(book.id,s.number-1));previous.disabled=s.number===1;
     navigation.append(previous,el('span','navigation-count',`${s.number} / ${book.scenes.length}`),button(s.number===book.scenes.length?'대본 목록으로 →':'다음 장면 →','primary',goNextScene));wrap.append(navigation);
     wrap.append(el('p','reader-footer','읽음 표시는 체크박스에서, 장면 이동은 이전·다음 버튼에서 할 수 있어요.'));
-    colorCharacterNames(wrap,book);
+    colorSpeakerNames(wrap,book);
     $('main').replaceChildren(wrap);highlightBookmark();renderPhoneNavigation();
   }
-  function colorCharacterNames(root,book) {
+  function colorSpeakerNames(root,book) {
     // Explicit source spelling variants share the canonical character's color.
     const variants=book.id==='sidong'
       ? [['임공우','입공우','공우'],['강정옥','강정욱','강경옥','강정우','정옥'],['성현기','성전기','현기'],['고상오','고장오','상오'],['김갑원','김감원','김갑천','갑원'],['박승조','승조']]
       : [['오한구','한구'],['최철민','최철미','철민'],['김수정','수정'],['신반장','신 반장','신팀장'],['장형사','장 형사']];
     const colors=new Map(variants.flatMap((names,index)=>names.map(name=>[name,index])));
     const pattern=new RegExp([...colors.keys()].sort((a,b)=>b.length-a.length).join('|'),'g');
-    root.querySelectorAll('.recap-box,.summary-card,.learning-guide,.script,.intro-text').forEach(section=>{
+    root.querySelectorAll('.speaker').forEach(section=>{
       const walker=document.createTreeWalker(section,NodeFilter.SHOW_TEXT),nodes=[];
       while(walker.nextNode())nodes.push(walker.currentNode);
       nodes.forEach(node=>{

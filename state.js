@@ -1,10 +1,10 @@
 (function (root) {
   'use strict';
   const position = () => ({ line: null, delta: 0, top: 0, percent: 0 });
-  const scene = () => ({ done: false, summaryDone: false, visited: false, note: '', positions: { summary: position(), full: position() }, bookmark: null });
+  const scene = () => ({ done: false, summaryDone: false, summaryOpen: true, visited: false, note: '', positions: { summary: position(), full: position() }, bookmark: null });
   const bounded = (value, min, max, fallback) => Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   function fresh(books) {
-    return { version: 1, settings: { fontSize: 18, theme: 'paper', mode: 'summary', characterColors: true }, last: null,
+    return { version: 1, settings: { fontSize: 18, theme: 'paper', mode: 'full', characterColors: true }, last: null,
       books: Object.fromEntries(books.map(b => [b.id, { sourceHash: b.sourceHash, lastScene: 1, memory: '', scenes: Object.fromEntries(b.scenes.map(s => [s.number, scene()])) }])) };
   }
   function normalize(raw, books, strict = false) {
@@ -15,7 +15,7 @@
     const out = fresh(books);
     out.settings.fontSize = Math.round(bounded(raw.settings?.fontSize, 12, 32, 18));
     out.settings.theme = raw.settings?.theme === 'dark' ? 'dark' : 'paper';
-    out.settings.mode = raw.settings?.mode === 'full' ? 'full' : 'summary';
+    out.settings.mode = 'full'; // Legacy backup field; the original is now always visible.
     out.settings.characterColors = raw.settings?.characterColors !== false;
     for (const book of books) {
       const source = raw.books?.[book.id];
@@ -31,6 +31,7 @@
         if (!from || typeof from !== 'object') continue;
         const to = target.scenes[s.number];
         for (const flag of ['done', 'summaryDone', 'visited']) to[flag] = from[flag] === true;
+        to.summaryOpen = from.summaryOpen !== false;
         to.note = typeof from.note === 'string' ? from.note.slice(0, 16000) : '';
         const allowed = new Set(s.lines.map(l => l.number));
         for (const mode of ['summary', 'full']) {
