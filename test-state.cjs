@@ -67,3 +67,9 @@ test('reading the original does not automatically certify the summary',()=>{
   const s=Core.fresh(books);s.books.sidong.scenes[1].done=true;
   assert.deepEqual(Core.progress(books[0],s),{total:16,full:1,summary:0});
 });
+test('collapsed summaries survive backup restore and legacy backups default open',()=>{
+  const s=Core.fresh(books);s.books.sidong.scenes[1].summaryOpen=false;
+  assert.equal(Core.normalize(JSON.parse(JSON.stringify(s)),books,true).books.sidong.scenes[1].summaryOpen,false);
+  delete s.books.sidong.scenes[1].summaryOpen;s.settings.mode='summary';
+  const r=Core.normalize(s,books,true);assert.equal(r.books.sidong.scenes[1].summaryOpen,true);assert.equal(r.settings.mode,'full');
+});

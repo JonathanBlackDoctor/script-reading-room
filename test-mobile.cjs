@@ -12,19 +12,19 @@ const OUT=path.join(__dirname,'.preview');
  const noOverflow=async label=>assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,label);
  const pass=t=>console.log('PASS',t);
  try{
-  await p.goto(BASE+'#sidong/1');await p.waitForSelector('.summary-card');await settle();
+  await p.goto(BASE+'#sidong/1');await p.waitForSelector('#original-text');await settle();
   assert.ok((await p.locator('.topbar').boundingBox()).height<=64);for(const id of ['toc-toggle','settings-open','context-open'])assert.ok((await p.locator('#'+id).boundingBox()).height>=44);
-  assert.equal(await p.getByRole('tab').count(),2);assert.equal(await p.locator('#mobile-reading-nav').isVisible(),true);pass('clear touch controls and a single content switcher');
+  assert.equal(await p.getByRole('tab').count(),0);assert.equal(await p.locator('.overview-text').isVisible(),true);assert.equal(await p.locator('#mobile-reading-nav').isVisible(),true);pass('clear touch controls, compact summary and continuous original');
   await p.screenshot({path:path.join(OUT,'phone-summary-390.png')});
   await p.getByRole('button',{name:'모바일 다음 장면',exact:true}).click();await p.waitForURL('**/#sidong/2');await settle();assert.equal((await state()).books.sidong.scenes[1].summaryDone,false);
   await p.getByRole('checkbox',{name:'이 장면 요약 읽음',exact:true}).check();assert.equal((await state()).books.sidong.scenes[2].summaryDone,true);
   await p.getByRole('button',{name:'모바일 이전 장면',exact:true}).click();await p.waitForURL('**/#sidong/1');await settle();pass('next is navigation only and read status has its own checkbox');
   await p.getByRole('button',{name:'읽기 설정 열기',exact:true}).click();await p.locator('#font-slider').press('Home');await settle();assert.equal(await p.locator('#settings-font-size').textContent(),'12px');await p.getByRole('button',{name:'이 설정으로 읽기',exact:true}).click();await settle();
-  assert.equal(await p.locator('.summary-card p').first().evaluate(e=>getComputedStyle(e).fontSize),'12px');await p.reload();await p.waitForSelector('.summary-card');assert.equal((await state()).settings.fontSize,12);pass('phone supports persistent 12px body text');
+  assert.equal(await p.locator('#original-text').evaluate(e=>getComputedStyle(e).fontSize),'12px');await p.reload();await p.waitForSelector('#original-text');assert.equal((await state()).settings.fontSize,12);pass('phone supports persistent 12px body text');
   await p.getByRole('button',{name:'읽기 설정 열기',exact:true}).click();await p.locator('#font-slider').press('End');await p.screenshot({path:path.join(OUT,'phone-settings-390.png')});await p.getByRole('button',{name:'이 설정으로 읽기',exact:true}).click();await settle();
   for(const [width,height]of [[320,740],[360,800],[375,812],[390,844],[414,896],[430,932],[740,360]]){await p.setViewportSize({width,height});await settle();await noOverflow(`summary32:${width}`);const box=await p.locator('.toolbar').boundingBox();assert.ok(box.x+box.width<=width+1);}
   pass('large type and the labelled header fit seven phone layouts');
-  await p.setViewportSize({width:390,height:844});await settle();await p.getByRole('tab',{name:'원문',exact:true}).click();await settle();
+  await p.setViewportSize({width:390,height:844});await p.locator('.scene-overview>summary').click();await settle();assert.equal(await p.locator('.overview-text').isVisible(),false);assert.equal(await p.locator('#original-text').isVisible(),true);
   for(const width of [320,360,390,430]){await p.setViewportSize({width,height:844});await settle();await noOverflow(`original32:${width}`);}pass('original panel fits narrow screens with maximum font size');
   await p.setViewportSize({width:390,height:844});await settle();await p.getByRole('button',{name:'읽기 설정 열기',exact:true}).click();await p.locator('#font-slider').press('Home');for(let i=0;i<6;i++)await p.locator('#font-slider').press('ArrowRight');await p.getByRole('button',{name:'이 설정으로 읽기',exact:true}).click();await settle();
   await p.locator('#line-100').evaluate(e=>{e.scrollIntoView();scrollBy(0,-105);});await settle();await p.getByRole('button',{name:'현재 원문 문단에 책갈피 남기기',exact:true}).click();assert.ok((await state()).books.sidong.scenes[1].bookmark?.line);
