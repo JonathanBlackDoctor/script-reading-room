@@ -58,3 +58,12 @@ test('bookmarks refer only to paragraphs belonging to their own scene', () => {
   const s=Core.fresh(books);s.books.sidong.scenes[1].bookmark={line:1000};s.books.sidong.scenes[2].bookmark={line:150,delta:4,top:600,percent:20};
   const r=Core.normalize(s,books,true);assert.equal(r.books.sidong.scenes[1].bookmark,null);assert.equal(r.books.sidong.scenes[2].bookmark.line,150);
 });
+test('12px preference survives backup normalization and smaller values stop at 12px',()=>{
+  const s=Core.fresh(books);assert.equal(s.settings.fontSize,18);s.settings.fontSize=12;
+  assert.equal(Core.normalize(s,books,true).settings.fontSize,12);
+  s.settings.fontSize=5;assert.equal(Core.normalize(s,books,true).settings.fontSize,12);
+});
+test('reading the original does not automatically certify the summary',()=>{
+  const s=Core.fresh(books);s.books.sidong.scenes[1].done=true;
+  assert.deepEqual(Core.progress(books[0],s),{total:16,full:1,summary:0});
+});

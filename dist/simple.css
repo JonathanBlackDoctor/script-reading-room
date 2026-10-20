@@ -140,3 +140,72 @@ body.dark{--paper:#181818;--surface:#181818;--ink:#e6e6e6;--muted:#aaa;--line:#3
   .dialog-header h2{font-size:21px}
   .settings-dialog .font-preview{padding:15px;line-height:1.65}
 }
+
+/* Give each action and reading area one clear job. */
+.toolbar #settings-open{display:inline-flex;min-height:44px}
+.toolbar #context-open{min-height:44px}
+.scene-heading{padding:13px 0 20px}
+.scene-heading .scene-kicker{margin:0 0 7px}
+.scene-heading h1{font-size:27px;line-height:1.5;letter-spacing:-.6px;margin:0}
+.reader-view-tabs{display:flex;gap:4px;border:1px solid var(--line);padding:4px;border-radius:7px;background:var(--green-soft);margin-bottom:17px}
+.reader-view-tabs .button{flex:1;min-height:44px;border:0;border-radius:4px;font-size:14px;background:transparent;color:var(--muted)}
+.reader-view-tabs .button.active{background:var(--ink);color:var(--paper);font-weight:600}
+.reader-view-tabs .button:hover:not(.active){background:var(--surface);color:var(--ink)}
+.recap-box{border:1px solid var(--line);border-radius:6px;padding:0 16px;margin:0 0 18px;background:var(--green-soft)}
+.recap-box>summary{display:flex;align-items:center;min-height:46px;font-size:13px;color:var(--muted);cursor:pointer;list-style:none}
+.recap-box>summary:before{content:'＋';font-size:16px;margin-right:8px}
+.recap-box[open]>summary:before{content:'−'}
+.recap-box>p{font-size:var(--read-size);line-height:1.85;margin:0 0 15px;word-break:keep-all;overflow-wrap:break-word}
+.cast-recap{padding:0 0 15px}
+.cast-recap summary{font-size:13px;padding:5px 0 12px;cursor:pointer}
+.reading-panel{border:1px solid var(--line);border-radius:7px;padding:24px 24px 0;background:var(--surface);min-width:0}
+.panel-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.panel-heading h2{font-size:16px;margin:0;font-weight:600}
+.panel-kind{font-size:11px;padding:2px 7px;background:var(--green-soft);color:var(--muted);border-radius:3px}
+.panel-heading .bookmark-return{margin-left:auto;font-size:12px}
+.reading-panel .original{margin:0}
+.learning-guide{margin:20px 0 24px;border-top:1px solid var(--line);padding-top:9px}
+.learning-guide summary{font-size:13px;min-height:44px;padding:10px 0;cursor:pointer;color:var(--muted)}
+.learning-guide ul{padding-left:20px;font-size:var(--read-size);line-height:1.85;color:var(--muted)}
+.learning-guide .reading-question{font-size:var(--read-size);line-height:1.85;padding:12px 0 0;border-top:1px solid var(--line)}
+.completion-strip{margin:20px -24px 0;padding:12px 24px;background:var(--green-soft);border-top:1px solid var(--line);border-radius:0 0 7px 7px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.completion-control{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;font-weight:600;cursor:pointer}
+.completion-control input{appearance:auto;width:19px;height:19px;margin:0;accent-color:var(--ink);flex-shrink:0;cursor:pointer}
+.completion-status{font-size:11px;color:var(--muted)}
+.open-original{display:flex;align-items:center;justify-content:center;min-height:47px;width:100%;margin-top:12px;font-size:13px}
+.scene-note-box{margin:22px 0;border:1px solid var(--line);border-radius:6px;padding:0 16px}
+.scene-note-box>summary{font-size:14px;min-height:48px;display:flex;align-items:center;cursor:pointer;font-weight:500;list-style:none}
+.scene-note-box>summary:before{content:'＋';margin-right:9px}
+.scene-note-box[open]>summary:before{content:'−'}
+.scene-note-box .note-status{margin-bottom:15px}
+.scene-note-box>div{padding-top:7px}
+.navigation-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.setting-range{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}
+.settings-section h3{line-height:1.8}
+.settings-section .font-preview{font-size:var(--read-size)}
+.reader-footer{color:var(--muted)}
+.dark .reader-view-tabs .button.active{background:var(--ink);color:var(--paper)}
+@media(max-width:760px){
+  .toolbar #settings-open{min-width:67px;font-size:12px;padding:6px 8px}
+  .toolbar #context-open{min-width:44px}
+  .scene-heading{padding:10px 0 18px}
+  .scene-heading h1{font-size:24px;line-height:1.5}
+  .reader-view-tabs{margin-bottom:14px}
+  .reader-view-tabs .button{min-height:44px;font-size:14px}
+  .recap-box{padding:0 13px;margin-bottom:15px}
+  .recap-box>summary{font-size:12px;min-height:46px}
+  .reading-panel{padding:18px 16px 0;border-radius:6px}
+  .panel-heading{margin-bottom:18px;gap:8px}
+  .panel-heading h2{font-size:15px}
+  .panel-heading .bookmark-return{margin-left:0;min-height:40px}
+  .reading-panel .summary-card p{font-size:var(--read-size);line-height:1.85}
+  .learning-guide{margin-bottom:17px}
+  .completion-strip{margin:17px -16px 0;padding:9px 16px;border-radius:0 0 6px 6px;gap:0}
+  .completion-control{font-size:13px}
+  .completion-status{font-size:11px;flex-basis:100%;padding:0 0 7px 29px}
+  .scene-note-box{padding:0 13px;margin:18px 0}
+  .scene-note-box>summary{font-size:13px}
+  .mobile-reading-nav .mobile-next{flex:0 0 auto;min-width:90px}
+  .mobile-reading-nav .mobile-scene-count{flex:1}
+  .floating-bookmark{font-size:12px}
+}
