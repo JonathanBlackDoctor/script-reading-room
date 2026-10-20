@@ -4,7 +4,7 @@
   const scene = () => ({ done: false, summaryDone: false, visited: false, note: '', positions: { summary: position(), full: position() }, bookmark: null });
   const bounded = (value, min, max, fallback) => Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   function fresh(books) {
-    return { version: 1, settings: { fontSize: 20, theme: 'paper', mode: 'summary' }, last: null,
+    return { version: 1, settings: { fontSize: 18, theme: 'paper', mode: 'summary' }, last: null,
       books: Object.fromEntries(books.map(b => [b.id, { sourceHash: b.sourceHash, lastScene: 1, memory: '', scenes: Object.fromEntries(b.scenes.map(s => [s.number, scene()])) }])) };
   }
   function normalize(raw, books, strict = false) {
@@ -13,7 +13,7 @@
       return fresh(books);
     }
     const out = fresh(books);
-    out.settings.fontSize = Math.round(bounded(raw.settings?.fontSize, 16, 32, 20));
+    out.settings.fontSize = Math.round(bounded(raw.settings?.fontSize, 12, 32, 18));
     out.settings.theme = raw.settings?.theme === 'dark' ? 'dark' : 'paper';
     out.settings.mode = raw.settings?.mode === 'full' ? 'full' : 'summary';
     for (const book of books) {
@@ -46,7 +46,7 @@
   }
   function progress(book, state) {
     const rows = Object.values(state.books[book.id].scenes);
-    return { total: book.scenes.length, full: rows.filter(s => s.done).length, summary: rows.filter(s => s.summaryDone || s.done).length };
+    return { total: book.scenes.length, full: rows.filter(s => s.done).length, summary: rows.filter(s => s.summaryDone).length };
   }
   function parseRoute(hash, books) {
     const parts = hash.replace(/^#/, '').split('/');
